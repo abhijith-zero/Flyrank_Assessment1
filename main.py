@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 app= FastAPI()
 
@@ -22,3 +23,13 @@ async def root():
 async def healthcheck():
     return {"status": "ok"}
 
+@app.get("/tasks")
+async def get_tasks():
+    return tasks
+
+@app.get("/tasks/{task_id}")
+async def get_task(task_id: int):
+    for task in tasks:
+        if task.id == task_id:
+            return  task
+    return JSONResponse(status_code=404, content= {"error":f"Task {task_id} not found"})
