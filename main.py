@@ -1,18 +1,18 @@
+from turtle import done
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 app= FastAPI()
 
-class Task:
-    def __init__(self, id: int, title: str, done: bool):
-        self.id = id
-        self.title = title
-        self.done = done
-
+class Task(BaseModel):
+    title: str
+    
 tasks = [
-    Task(1, "Task 1", False),
-    Task(2, "Task 2", True),
-    Task(3, "Task 3", False)
+    {"id": 1, "title": "Task 1", "done": False},
+    {"id": 2, "title": "Task 2", "done": True},
+    {"id": 3, "title": "Task 3", "done": False}
 ]
 
 @app.get("/")
@@ -30,6 +30,14 @@ async def get_tasks():
 @app.get("/tasks/{task_id}")
 async def get_task(task_id: int):
     for task in tasks:
-        if task.id == task_id:
-            return  task
-    return JSONResponse(status_code=404, content= {"error":f"Task {task_id} not found"})
+        if task["id"] == task_id:
+            return task
+    return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
+
+@app.post("/tasks", status_code=201)
+async def create_task(task: Task):
+    if task.title:
+        new_task= {"id": len(tasks) + 1, "title": task.title, "done": False}
+        tasks.append(new_task)
+        return new_task
+    return JSONResponse(status_code=400, content={"error": "Task title is required"})
