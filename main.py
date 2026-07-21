@@ -1,6 +1,6 @@
 from turtle import done
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -8,6 +8,7 @@ app= FastAPI()
 
 class Task(BaseModel):
     title: str
+    done:bool = False
     
 tasks = [
     {"id": 1, "title": "Task 1", "done": False},
@@ -41,3 +42,22 @@ async def create_task(task: Task):
         tasks.append(new_task)
         return new_task
     return JSONResponse(status_code=400, content={"error": "Task title is required"})
+
+@app.put("/tasks/{task_id}")
+async def update_task(task_id: int, task: Task):
+    if not task.title:
+        return JSONResponse(status_code=400, content={"error": "Task title is required"})
+    for t in tasks:
+        if t["id"] == task_id:
+            t["title"] = task.title
+            t["done"] = task.done
+            return t
+    return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
+
+@app.delete("/tasks/{task_id}", status_code=204)
+async def delete_task(task_id: int):
+    for t in tasks:
+        if t["id"] == task_id:
+            tasks.remove(t)
+            return Response(status_code=204)
+    return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
