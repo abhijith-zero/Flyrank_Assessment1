@@ -29,7 +29,7 @@ python -m venv .venv && .venv/Scripts/activate && pip install "fastapi[standard]
 | ------ | ------------- | -------------- | -------------------------------------- |
 | GET    | `/`           | 200            | API name, version, and endpoint list   |
 | GET    | `/health`     | 200            | Liveness check — `{"status": "ok"}`    |
-| GET    | `/tasks`      | 200            | All tasks                              |
+| GET    | `/tasks`      | 200            | All tasks, optionally filtered         |
 | GET    | `/tasks/{id}` | 200 / 404      | One task by id                         |
 | POST   | `/tasks`      | 201 / 400      | Create a task from `{"title", "done"}` |
 | PUT    | `/tasks/{id}` | 200 / 400, 404 | Replace a task's title and done flag   |
@@ -39,6 +39,27 @@ A task is `{"id": int, "title": str, "done": bool}`. `id` is assigned by the ser
 request bodies only carry `title` (required) and `done` (defaults to `false`).
 
 Errors come back as `{"error": "..."}`
+
+### Filtering `/tasks`
+
+`GET /tasks` accepts two optional query parameters:
+
+| Param    | Type   | Effect                                          |
+| -------- | ------ | ----------------------------------------------- |
+| `done`   | bool   | Only tasks whose `done` matches                 |
+| `search` | string | Only tasks whose title contains it, ignoring case |
+
+```console
+$ curl -s "http://127.0.0.1:8000/tasks?done=false"
+[{"id":1,"title":"Task 1","done":false},{"id":3,"title":"Task 3","done":false}]
+
+$ curl -s "http://127.0.0.1:8000/tasks?search=task%202"
+[{"id":2,"title":"Task 2","done":true}]
+```
+
+The two filters do **not** combine — `done` is checked first and returns
+immediately, so `?done=true&search=zzz` ignores `search` and returns every done
+task. Passing a non-boolean `done` (e.g. `?done=yes please`) is a 422.
 
 ## Example
 
