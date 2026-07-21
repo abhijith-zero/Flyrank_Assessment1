@@ -20,30 +20,30 @@ tasks = [
 async def root():
     return { "name": "Task API", "version": "1.0", "endpoints": ["/tasks"] }
 
-@app.get("/health")
+@app.get("/health", summary="Health Check", description="Check the health of the API")
 async def healthcheck():
     return {"status": "ok"}
 
-@app.get("/tasks")
+@app.get("/tasks", summary="Get Tasks", description="Get all tasks")
 async def get_tasks():
     return tasks
 
-@app.get("/tasks/{task_id}")
+@app.get("/tasks/{task_id}", summary="Get Task", description="Get a task by its ID")
 async def get_task(task_id: int):
     for task in tasks:
         if task["id"] == task_id:
             return task
     return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
 
-@app.post("/tasks", status_code=201)
+@app.post("/tasks", summary="Create Task", description="Create a new task", status_code=201)
 async def create_task(task: Task):
     if task.title:
-        new_task= {"id": len(tasks) + 1, "title": task.title, "done": False}
+        new_task= {"id": len(tasks) + 1, "title": task.title, "done": "False"}
         tasks.append(new_task)
         return new_task
     return JSONResponse(status_code=400, content={"error": "Task title is required"})
 
-@app.put("/tasks/{task_id}")
+@app.put("/tasks/{task_id}", summary="Update Task", description="Update a task by its ID")
 async def update_task(task_id: int, task: Task):
     if not task.title:
         return JSONResponse(status_code=400, content={"error": "Task title is required"})
@@ -54,7 +54,7 @@ async def update_task(task_id: int, task: Task):
             return t
     return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
 
-@app.delete("/tasks/{task_id}", status_code=204)
+@app.delete("/tasks/{task_id}", summary="Delete Task", description="Delete a task by its ID", status_code=204)
 async def delete_task(task_id: int):
     for t in tasks:
         if t["id"] == task_id:
