@@ -1,8 +1,35 @@
+import sqlite3
+
 from fastapi import FastAPI
 from routes.task_routes import router
 
 
 app= FastAPI()
+
+conn = sqlite3.connect('tasks.db')
+cursor = conn.cursor()
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    done BOOLEAN NOT NULL DEFAULT 0)''')
+
+cursor.execute('''SELECT COUNT(*) FROM tasks''')
+total_tasks = cursor.fetchone()[0]
+
+if total_tasks == 0:
+        cursor.executemany(
+        "INSERT INTO tasks (title, done) VALUES (?, ?)",
+        [
+            ("Task 1", 0),
+            ("Task 2", 1),
+            ("Task 3", 0)
+        ]
+    )
+conn.commit()
+conn.close()
+    
+    
 
 @app.get("/")
 async def root():

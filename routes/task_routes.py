@@ -7,11 +7,11 @@ from services.task_services import TaskService
 
 router = APIRouter()
 
-@router.get("/tasks")
+@router.get("/tasks", summary="Get Tasks", description="Get all tasks")
 async def get_tasks(done: bool = None, search: str = None):
     return TaskService.get_tasks(done, search)
 
-@router.get("/tasks/{task_id}")
+@router.get("/tasks/{task_id}", summary="Get Task", description="Get a task by its ID")
 async def get_task(task_id: int):
     task = TaskService.get_task(task_id)
 
@@ -22,7 +22,7 @@ async def get_task(task_id: int):
         )
 
     return task
-@router.post("/tasks", status_code=201)
+@router.post("/tasks", summary="Create Task", description="Create a new task", status_code=201)
 async def create_task(task: Task):
     if not task.title.strip():
         return JSONResponse(
@@ -33,7 +33,7 @@ async def create_task(task: Task):
     return TaskService.create_task(task)
 
 
-@router.put("/tasks/{task_id}")
+@router.put("/tasks/{task_id}", summary="Update Task", description="Update a task by its ID")
 async def update_task(task_id: int, task: Task):
     updated = TaskService.update_task(task_id, task)
 
@@ -44,7 +44,7 @@ async def update_task(task_id: int, task: Task):
         )
 
     return updated
-@router.delete("/tasks/{task_id}", status_code=204)
+@router.delete("/tasks/{task_id}", summary="Delete Task", description="Delete a task by its ID", status_code=204)
 async def delete_task(task_id: int):
     deleted = TaskService.delete_task(task_id)
 
@@ -57,6 +57,6 @@ async def delete_task(task_id: int):
     return Response(status_code=204)
 
 
-@router.get("/stats")
+@router.get("/stats", summary="Get Stats", description="Get statistics about tasks")
 async def stats():
     return TaskService.get_stats()
