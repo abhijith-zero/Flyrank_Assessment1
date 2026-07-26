@@ -1,3 +1,5 @@
+from fastapi.responses import JSONResponse
+
 from repositories.task_repository import TaskRepository
 from models.task import Task
 
@@ -24,6 +26,11 @@ class TaskService:
         return TaskRepository.add(new_task)
     
     def update_task(task_id, task):
+        if not task.title.strip():
+            return JSONResponse(
+            status_code=400,
+            content={"error": "Task title is required"}
+        )
         return TaskRepository.update(task_id, task)
     def delete_task(task_id):
         return TaskRepository.delete(task_id)
