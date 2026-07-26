@@ -1,5 +1,5 @@
 from repositories.task_repository import TaskRepository
-
+from models.task import Task
 
 class TaskService:
     
@@ -7,12 +7,12 @@ class TaskService:
         tasks = TaskRepository.get_all_tasks()
 
         if done is not None:
-            tasks = [t for t in tasks if t["done"] == done]
+            tasks = [t for t in tasks if t.done == done]
 
         if search:
             tasks = [
                 t for t in tasks
-                if search.lower() in t["title"].lower()
+                if search.lower() in t.title.lower()
             ]
 
         return tasks
@@ -20,19 +20,11 @@ class TaskService:
         return TaskRepository.get_by_id(task_id)
     
     def create_task(task):
-        new_task = {
-            "id": len(TaskRepository.get_all_tasks()) + 1,
-            "title": task.title.strip(),
-            "done": False
-        }
-
+        new_task = Task(title=task.title)
         return TaskRepository.add(new_task)
     
     def update_task(task_id, task):
-        return TaskRepository.update(task_id, {
-            "title": task.title,
-            "done": task.done
-        })
+        return TaskRepository.update(task_id, task)
     def delete_task(task_id):
         return TaskRepository.delete(task_id)
 
@@ -40,7 +32,7 @@ class TaskService:
         tasks = TaskRepository.get_all_tasks()
 
         total = len(tasks)
-        completed = len([t for t in tasks if t["done"]])
+        completed = len([t for t in tasks if t.done])
 
         return {
             "total": total,

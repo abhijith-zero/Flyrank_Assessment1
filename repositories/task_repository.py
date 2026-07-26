@@ -1,33 +1,39 @@
-tasks = [
-    {"id": 1, "title": "Task 1", "done": False},
-    {"id": 2, "title": "Task 2", "done": True},
-    {"id": 3, "title": "Task 3", "done": False}
-]
+from database import engine
+from models.task import Task
+from sqlmodel import Session, select
 
 class TaskRepository:
     
     def get_all_tasks():
-        return tasks
+        with Session(engine) as session:
+            return session.exec(select(Task)).all()
     
     def get_by_id(task_id: int):
-        return next((t for t in tasks if t["id"] == task_id), None)
+        with Session(engine) as session:
+            return session.get(Task, task_id)
     
     def add(task):
-        tasks.append(task)
-        return task
+        with Session(engine) as session:
+            session.add(task)
+            session.commit()
+            session.refresh(task)
+            return task
 
-    def update(task_id, data):
-        task = TaskRepository.get_by_id(task_id)
-
-        if task:
-            task.update(data)
-
-        return task
+    def update(task_id, task):
+        with Session(engine) as session:
+            db_task = session.get(Task, task_id)
+            if not db_task:
+                return None
+            db_task.title = task.title
+            db_task.done = task.done
+            session.commit()
+            session.refresh(db_task)
+            return db_task
     
     def delete(task_id):
-        task = TaskRepository.get_by_id(task_id)
-
-        if task:
-            tasks.remove(task)
-
-        return task
+        with Session(engine) as session:
+            task = session.get(Task, task_id)
+            if task:
+                session.delete(task)
+                session.commit()
+                return task
