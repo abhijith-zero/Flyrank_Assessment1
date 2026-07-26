@@ -1,20 +1,35 @@
-from turtle import done
+import sqlite3
 
-from fastapi import FastAPI, Response
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from fastapi import FastAPI
+from routes.task_routes import router
+
 
 app= FastAPI()
 
-class Task(BaseModel):
-    title: str
-    done:bool = False
+conn = sqlite3.connect('tasks.db')
+cursor = conn.cursor()
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    done BOOLEAN NOT NULL DEFAULT 0)''')
+
+cursor.execute('''SELECT COUNT(*) FROM tasks''')
+total_tasks = cursor.fetchone()[0]
+
+if total_tasks == 0:
+        cursor.executemany(
+        "INSERT INTO tasks (title, done) VALUES (?, ?)",
+        [
+            ("Task 1", 0),
+            ("Task 2", 1),
+            ("Task 3", 0)
+        ]
+    )
+conn.commit()
+conn.close()
     
-tasks = [
-    {"id": 1, "title": "Task 1", "done": False},
-    {"id": 2, "title": "Task 2", "done": True},
-    {"id": 3, "title": "Task 3", "done": False}
-]
+    
 
 @app.get("/")
 async def root():
@@ -24,52 +39,54 @@ async def root():
 async def healthcheck():
     return {"status": "ok"}
 
-@app.get("/tasks", summary="Get Tasks", description="Get all tasks")
-async def get_tasks( done: bool = None,search: str = None):
-    if done is not None:
-        filtered_tasks = [task for task in tasks if task["done"] == done]
-        return filtered_tasks
-    if search is not None:
-        filtered_tasks = [task for task in tasks if search.lower() in task["title"].lower()]
-        return filtered_tasks
-    return tasks
+app.include_router(router)
 
-@app.get("/tasks/{task_id}", summary="Get Task", description="Get a task by its ID")
-async def get_task(task_id: int):
-    for task in tasks:
-        if task["id"] == task_id:
-            return task
-    return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
+# @app.get("/tasks", summary="Get Tasks", description="Get all tasks")
+# async def get_tasks( done: bool = None,search: str = None):
+#     if done is not None:
+#         filtered_tasks = [task for task in tasks if task["done"] == done]
+#         return filtered_tasks
+#     if search is not None:
+#         filtered_tasks = [task for task in tasks if search.lower() in task["title"].lower()]
+#         return filtered_tasks
+#     return tasks
 
-@app.get("/stats", summary="Get Stats", description="Get statistics about tasks")
-async def get_stats():
-    total_tasks = len(tasks)
-    completed_tasks = len([task for task in tasks if task["done"]])
-    return {"total": total_tasks, "done": completed_tasks,"open": total_tasks - completed_tasks}
+# @app.get("/tasks/{task_id}", summary="Get Task", description="Get a task by its ID")
+# async def get_task(task_id: int):
+#     for task in tasks:
+#         if task["id"] == task_id:
+#             return task
+#     return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
 
-@app.post("/tasks", summary="Create Task", description="Create a new task", status_code=201)
-async def create_task(task: Task):
-    if task.title:
-        new_task= {"id": len(tasks) + 1, "title": task.title, "done": "False"}
-        tasks.append(new_task)
-        return new_task
-    return JSONResponse(status_code=400, content={"error": "Task title is required"})
+# @app.get("/stats", summary="Get Stats", description="Get statistics about tasks")
+# async def get_stats():
+#     total_tasks = len(tasks)
+#     completed_tasks = len([task for task in tasks if task["done"]])
+#     return {"total": total_tasks, "done": completed_tasks,"open": total_tasks - completed_tasks}
 
-@app.put("/tasks/{task_id}", summary="Update Task", description="Update a task by its ID")
-async def update_task(task_id: int, task: Task):
-    if not task.title:
-        return JSONResponse(status_code=400, content={"error": "Task title is required"})
-    for t in tasks:
-        if t["id"] == task_id:
-            t["title"] = task.title
-            t["done"] = task.done
-            return t
-    return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
+# @app.post("/tasks", summary="Create Task", description="Create a new task", status_code=201)
+# async def create_task(task: Task):
+#     if task.title:
+#         new_task= {"id": len(tasks) + 1, "title": task.title, "done": "False"}
+#         tasks.append(new_task)
+#         return new_task
+#     return JSONResponse(status_code=400, content={"error": "Task title is required"})
 
-@app.delete("/tasks/{task_id}", summary="Delete Task", description="Delete a task by its ID", status_code=204)
-async def delete_task(task_id: int):
-    for t in tasks:
-        if t["id"] == task_id:
-            tasks.remove(t)
-            return Response(status_code=204)
-    return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
+# @app.put("/tasks/{task_id}", summary="Update Task", description="Update a task by its ID")
+# async def update_task(task_id: int, task: Task):
+#     if not task.title:
+#         return JSONResponse(status_code=400, content={"error": "Task title is required"})
+#     for t in tasks:
+#         if t["id"] == task_id:
+#             t["title"] = task.title
+#             t["done"] = task.done
+#             return t
+#     return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
+
+# @app.delete("/tasks/{task_id}", summary="Delete Task", description="Delete a task by its ID", status_code=204)
+# async def delete_task(task_id: int):
+#     for t in tasks:
+#         if t["id"] == task_id:
+#             tasks.remove(t)
+#             return Response(status_code=204)
+#     return JSONResponse(status_code=404, content={"error": f"Task {task_id} not found"})
