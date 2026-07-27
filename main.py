@@ -1,35 +1,21 @@
-import sqlite3
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from database import init_db
 from routes.task_routes import router
 
 
 app= FastAPI()
 
-conn = sqlite3.connect('tasks.db')
-cursor = conn.cursor()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()    
+    yield
 
-cursor.execute('''CREATE TABLE IF NOT EXISTS tasks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    done BOOLEAN NOT NULL DEFAULT 0)''')
 
-cursor.execute('''SELECT COUNT(*) FROM tasks''')
-total_tasks = cursor.fetchone()[0]
 
-if total_tasks == 0:
-        cursor.executemany(
-        "INSERT INTO tasks (title, done) VALUES (?, ?)",
-        [
-            ("Task 1", 0),
-            ("Task 2", 1),
-            ("Task 3", 0)
-        ]
-    )
-conn.commit()
-conn.close()
-    
-    
+app = FastAPI(lifespan=lifespan)
+app.include_router(router)
 
 @app.get("/")
 async def root():
@@ -38,9 +24,6 @@ async def root():
 @app.get("/health", summary="Health Check", description="Check the health of the API")
 async def healthcheck():
     return {"status": "ok"}
-
-app.include_router(router)
-
 # @app.get("/tasks", summary="Get Tasks", description="Get all tasks")
 # async def get_tasks( done: bool = None,search: str = None):
 #     if done is not None:
