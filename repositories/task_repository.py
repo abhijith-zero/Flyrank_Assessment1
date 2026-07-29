@@ -5,6 +5,23 @@ from sqlmodel import Session, select
 class TaskRepository:
     
     def get_all_tasks():
+        # with get_connection() as conn:
+        # with conn.cursor() as cur:
+        #     cur.execute("""
+        #         SELECT id, title, done
+        #         FROM tasks
+        #     """)
+
+        #     rows = cur.fetchall()
+
+        #     return [
+        #         {
+        #             "id": row[0],
+        #             "title": row[1],
+        #             "done": row[2],
+        #         }
+        #         for row in rows
+        #     ]
         with Session(engine) as session:
             return session.exec(select(Task)).all()
     

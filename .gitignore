@@ -1,0 +1,15 @@
+# Secrets — never commit
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtualenvs
+flyrank/
+.venv/
+venv/
+
+# SQLite leftovers from earlier stages
+*.db
+*.db-journal
